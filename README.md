@@ -97,7 +97,3 @@ src/
   components/             # Upload and chat UI
   lib/                    # Chunking, retrieval, prompts, Groq models, session store (Upstash + memory)
 ```
-
-## License
-
-Use and modification are subject to your course or organization policy; no license is asserted here unless otherwise specified by the repository owner.
