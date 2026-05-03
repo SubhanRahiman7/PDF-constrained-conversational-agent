@@ -69,7 +69,9 @@ Errors return JSON with `error` and optional `code` (see `src/lib/http.ts`).
 
 The application is designed for **Vercel** or any Node-compatible host. Set `GROQ_API_KEY` (and optional model overrides) in the host’s environment. Ensure **request body size limits** allow your maximum PDF upload (see `src/lib/config.ts` for `pdf.maxBytes`).
 
-**Serverless session store:** On Vercel, each API invocation may run in a **fresh isolate**; an in-memory session map is **not shared** between `/api/upload` and `/api/chat`. Configure **[Upstash Redis](https://upstash.com)** (free tier) and set **`UPSTASH_REDIS_REST_URL`** and **`UPSTASH_REDIS_REST_TOKEN`** on the project. Local development works without Redis (memory + `globalThis` for HMR).
+**Serverless session store:** On Vercel, each API invocation may run in a **fresh isolate**; an in-memory session map is **not shared** between `/api/upload` and `/api/chat`. Configure **[Upstash Redis](https://upstash.com)** (free tier) and set **`UPSTASH_REDIS_REST_URL`** and **`UPSTASH_REDIS_REST_TOKEN`** on the project for **Production** (and Preview if needed). **Redeploy** after saving env vars.
+
+**Verify:** `GET /api/health` should return `{"ok":true,"sessionStore":"redis"}`. If you see `"memory"`, the app will still show `SESSION_NOT_FOUND` in production until Redis env is set and redeployed.
 
 ## Project layout
 
