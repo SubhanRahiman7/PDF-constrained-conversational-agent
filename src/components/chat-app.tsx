@@ -70,7 +70,7 @@ export function ChatApp() {
 
   useEffect(() => {
     setMessages([]);
-  }, [sessionId, setMessages]);
+  }, [sessionId, locale, setMessages]);
 
   const busy = status === "streaming" || status === "submitted";
 

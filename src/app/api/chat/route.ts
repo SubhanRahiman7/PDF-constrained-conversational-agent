@@ -13,6 +13,7 @@ import {
   retrieveTopKDiverseByText,
   RETRIEVAL_MIN_SCORE,
 } from "@/lib/retrieve";
+import { RESPONSE_LOCALE_CODES } from "@/lib/locales";
 import { getSession } from "@/lib/session-store";
 
 export const runtime = "nodejs";
@@ -22,7 +23,7 @@ export const maxDuration = 60;
 const bodySchema = z.object({
   messages: z.array(z.unknown()).min(1),
   sessionId: z.string().uuid(),
-  responseLanguage: z.string().min(2).max(12).optional(),
+  responseLanguage: z.enum(RESPONSE_LOCALE_CODES).optional(),
 });
 
 export async function POST(req: Request) {

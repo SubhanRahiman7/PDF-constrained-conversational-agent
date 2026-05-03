@@ -3,20 +3,15 @@
 import { BookOpen, FileUp, Loader2 } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 
+import {
+  RESPONSE_LOCALES,
+  type ResponseLocaleCode,
+} from "@/lib/locales";
+
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
 const MAX_UPLOAD_MB = MAX_UPLOAD_BYTES / (1024 * 1024);
 
-const LOCALES = [
-  { code: "en", label: "English" },
-  { code: "es", label: "Español" },
-  { code: "fr", label: "Français" },
-  { code: "hi", label: "हिन्दी" },
-  { code: "ar", label: "العربية" },
-  { code: "de", label: "Deutsch" },
-  { code: "ja", label: "日本語" },
-] as const;
-
-export type LocaleCode = (typeof LOCALES)[number]["code"];
+export type LocaleCode = ResponseLocaleCode;
 
 type Props = {
   locale: LocaleCode;
@@ -208,7 +203,7 @@ export function UploadPanel({
           }
           className="w-full rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2.5 text-sm text-zinc-100 outline-none transition-colors focus:border-teal-500/40 focus:ring-1 focus:ring-teal-500/20"
         >
-          {LOCALES.map((l) => (
+          {RESPONSE_LOCALES.map((l) => (
             <option key={l.code} value={l.code}>
               {l.label}
             </option>
