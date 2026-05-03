@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen, FileUp, Loader2 } from "lucide-react";
+import { BookOpen, FileUp, Loader2, Trash2 } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 
 import {
@@ -24,6 +24,8 @@ type Props = {
     pageCount: number;
     chunkCount: number;
   }) => void;
+  /** Clear active PDF session and return UI to pre-upload state. */
+  onClearDocument: () => void;
 };
 
 export function UploadPanel({
@@ -32,6 +34,7 @@ export function UploadPanel({
   sessionId,
   docMeta,
   onSession,
+  onClearDocument,
 }: Props) {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -177,16 +180,31 @@ export function UploadPanel({
       ) : null}
 
       {docMeta && sessionId ? (
-        <div className="rounded-xl border border-zinc-800 bg-zinc-950/80 px-3 py-3">
+        <div className="space-y-2 rounded-xl border border-zinc-800 bg-zinc-950/80 px-3 py-3">
           <p
             className="truncate text-sm font-medium text-zinc-100"
             title={docMeta.filename}
           >
             {docMeta.filename}
           </p>
-          <p className="mt-1 font-mono text-[11px] text-zinc-500">
+          <p className="font-mono text-[11px] text-zinc-500">
             {docMeta.pageCount} pp · {docMeta.chunkCount} vectors · session{" "}
             <span className="text-zinc-400">{sessionId.slice(0, 8)}…</span>
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              abortRef.current?.abort();
+              onClearDocument();
+            }}
+            className="flex w-full items-center justify-center gap-2 rounded-lg border border-zinc-700 bg-zinc-900/80 px-3 py-2 text-xs font-medium text-zinc-300 transition-colors hover:border-red-500/35 hover:bg-red-500/10 hover:text-red-200"
+          >
+            <Trash2 className="h-3.5 w-3.5" aria-hidden />
+            Remove document
+          </button>
+          <p className="text-[10px] leading-relaxed text-zinc-600">
+            Clears chat and lets you upload a different PDF. The server session
+            expires on its own.
           </p>
         </div>
       ) : null}
@@ -210,7 +228,8 @@ export function UploadPanel({
           ))}
         </select>
         <p className="text-[11px] leading-relaxed text-zinc-500">
-          Replies follow this locale while staying grounded on source text.
+          New assistant replies use the selected locale (you can switch anytime).
+          Answers stay grounded on the PDF.
         </p>
       </div>
 

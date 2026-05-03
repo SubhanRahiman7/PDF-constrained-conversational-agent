@@ -50,27 +50,41 @@ export function ChatApp() {
   const [locale, setLocale] = useState<LocaleCode>("en");
   const bottomRef = useRef<HTMLDivElement>(null);
 
+  /** Latest session + locale for each request — avoids stale transport when language changes mid-chat. */
+  const sessionIdRef = useRef<string | null>(null);
+  const localeRef = useRef<LocaleCode>("en");
+  sessionIdRef.current = sessionId;
+  localeRef.current = locale;
+
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
         api: "/api/chat",
-        body: {
-          sessionId: sessionId ?? "",
-          responseLanguage: locale,
-        },
+        body: () => ({
+          sessionId: sessionIdRef.current ?? "",
+          responseLanguage: localeRef.current,
+        }),
       }),
-    [sessionId, locale],
+    [],
   );
 
+  const chatId = sessionId ?? "pending";
+
   const { messages, sendMessage, status, error, setMessages } = useChat({
-    id: sessionId ?? "pending",
+    id: chatId,
     transport,
     messages: [] as UIMessage[],
   });
 
   useEffect(() => {
     setMessages([]);
-  }, [sessionId, locale, setMessages]);
+  }, [sessionId, setMessages]);
+
+  const clearDocument = () => {
+    setSessionId(null);
+    setDocMeta(null);
+    setMessages([]);
+  };
 
   const busy = status === "streaming" || status === "submitted";
 
@@ -96,6 +110,7 @@ export function ChatApp() {
             chunkCount: p.chunkCount,
           });
         }}
+        onClearDocument={clearDocument}
       />
 
       <section className="flex min-h-[520px] min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-zinc-800/80 bg-zinc-900/45 shadow-2xl shadow-black/30 backdrop-blur-xl">
