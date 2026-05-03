@@ -9,6 +9,19 @@ A production-style web application for **question answering strictly over user-u
 - **Retrieval-gated generation** — Token-overlap scoring with configurable thresholds; low-confidence queries route to a **refusal** prompt instead of a grounded answer.
 - **Streaming chat** — Token streaming to the browser through `POST /api/chat` using the AI SDK message protocol.
 - **Internationalization hooks** — Client-selectable response language passed to the model context.
+- **Upstash Redis (production)** — PDF chunk sessions are stored via **[Upstash](https://upstash.com) serverless Redis** (`@upstash/redis`, REST API) so uploads and chat work across Vercel’s stateless function instances (see below).
+
+## Session storage: Upstash Redis
+
+This project uses **[Upstash Redis](https://upstash.com)** as the **session backend** when `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` are set.
+
+| Topic | Detail |
+|--------|--------|
+| **Why** | On **Vercel**, `/api/upload` and `/api/chat` can run on **different** serverless instances. An in-memory `Map` is not shared, which causes `SESSION_NOT_FOUND` after upload. Upstash provides a **shared** key-value store over HTTPS. |
+| **What we store** | Per-session JSON (chunk text + metadata), **gzip-compressed** and base64-encoded under keys `pdfchat:v1:{sessionId}`, with TTL aligned to the app’s session lifetime. |
+| **Dependency** | [`@upstash/redis`](https://github.com/upstash/upstash-redis-js) — see `src/lib/session-store.ts`. |
+| **Local dev** | Redis is **optional**. Without those env vars, the app uses **in-memory** storage (and `globalThis` so hot reload does not drop sessions). |
+| **Setup** | Create a free Redis database in the Upstash console, copy the **REST URL** and **REST token**, add them to Vercel (and optionally `.env.local`), then redeploy. |
 
 ## Architecture (summary)
 
@@ -69,9 +82,9 @@ Errors return JSON with `error` and optional `code` (see `src/lib/http.ts`).
 
 The application is designed for **Vercel** or any Node-compatible host. Set `GROQ_API_KEY` (and optional model overrides) in the host’s environment. Ensure **request body size limits** allow your maximum PDF upload (see `src/lib/config.ts` for `pdf.maxBytes`).
 
-**Serverless session store:** On Vercel, each API invocation may run in a **fresh isolate**; an in-memory session map is **not shared** between `/api/upload` and `/api/chat`. Configure **[Upstash Redis](https://upstash.com)** (free tier) and set **`UPSTASH_REDIS_REST_URL`** and **`UPSTASH_REDIS_REST_TOKEN`** on the project for **Production** (and Preview if needed). **Redeploy** after saving env vars.
+**Production sessions:** See **[Session storage: Upstash Redis](#session-storage-upstash-redis)**. Set **`UPSTASH_REDIS_REST_URL`** and **`UPSTASH_REDIS_REST_TOKEN`** for **Production** (and Preview if needed), then **redeploy**.
 
-**Verify:** `GET /api/health` should return `{"ok":true,"sessionStore":"redis"}`. If you see `"memory"`, the app will still show `SESSION_NOT_FOUND` in production until Redis env is set and redeployed.
+**Verify:** `GET /api/health` returns `{"ok":true,"sessionStore":"redis"}` when Upstash is configured. `"memory"` means Redis env is missing—expect `SESSION_NOT_FOUND` on Vercel until fixed.
 
 ## Project layout
 
@@ -82,7 +95,7 @@ src/
     api/chat/route.ts     # Retrieval, prompting, streaming
     page.tsx              # Entry page
   components/             # Upload and chat UI
-  lib/                    # Chunking, retrieval, prompts, Groq models, session store
+  lib/                    # Chunking, retrieval, prompts, Groq models, session store (Upstash + memory)
 ```
 
 ## License
