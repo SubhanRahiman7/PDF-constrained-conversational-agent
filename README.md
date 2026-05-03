@@ -15,7 +15,7 @@ A production-style web application for **question answering strictly over user-u
 | Layer | Responsibility |
 |--------|----------------|
 | **Client** | Upload UI, chat transcript, locale selection; calls Next.js API routes. |
-| **`POST /api/upload`** | Parse PDF, extract text, chunk, persist session payload (in-memory store with TTL). |
+| **`POST /api/upload`** | Parse PDF, extract text, chunk, persist session payload (**Upstash Redis** on serverless; in-memory locally). |
 | **`POST /api/chat`** | Resolve session, run retrieval over chunks, assemble system prompt (grounded vs refusal), stream Groq completion. |
 | **Groq** | Chat completions (`GROQ_API_KEY`); model selection can follow query complexity (see `src/lib/models.ts`). |
 
@@ -36,6 +36,8 @@ cp .env.example .env.local
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `GROQ_API_KEY` | Yes | API key for Groq inference. |
+| `UPSTASH_REDIS_REST_URL` | On Vercel / serverless | REST URL from [Upstash](https://upstash.com); required so `/api/upload` and `/api/chat` share sessions. |
+| `UPSTASH_REDIS_REST_TOKEN` | On Vercel / serverless | REST token (pair with URL above). |
 | `GROQ_SIMPLE_MODEL` | No | Defaults to `llama-3.1-8b-instant`. |
 | `GROQ_COMPLEX_MODEL` | No | Defaults to `llama-3.3-70b-versatile`. |
 
@@ -66,6 +68,8 @@ Errors return JSON with `error` and optional `code` (see `src/lib/http.ts`).
 ## Deployment
 
 The application is designed for **Vercel** or any Node-compatible host. Set `GROQ_API_KEY` (and optional model overrides) in the host’s environment. Ensure **request body size limits** allow your maximum PDF upload (see `src/lib/config.ts` for `pdf.maxBytes`).
+
+**Serverless session store:** On Vercel, each API invocation may run in a **fresh isolate**; an in-memory session map is **not shared** between `/api/upload` and `/api/chat`. Configure **[Upstash Redis](https://upstash.com)** (free tier) and set **`UPSTASH_REDIS_REST_URL`** and **`UPSTASH_REDIS_REST_TOKEN`** on the project. Local development works without Redis (memory + `globalThis` for HMR).
 
 ## Project layout
 

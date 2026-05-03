@@ -49,7 +49,7 @@ export async function POST(req: Request) {
   const { sessionId, responseLanguage = "en" } = parsed.data;
   const messages = parsed.data.messages as UIMessage[];
 
-  const session = getSession(sessionId);
+  const session = await getSession(sessionId);
   if (!session) {
     return jsonError(
       "Session expired or unknown. Upload your PDF again.",

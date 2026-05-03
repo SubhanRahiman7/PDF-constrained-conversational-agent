@@ -105,7 +105,7 @@ export async function POST(req: Request) {
     }
 
     const sessionId = randomUUID();
-    saveSession(sessionId, {
+    await saveSession(sessionId, {
       filename: safeFilename(file.name),
       pageCount: totalPages,
       chunks,
