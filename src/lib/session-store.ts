@@ -1,7 +1,18 @@
 import { config } from "./config";
 import type { SessionDoc } from "./types";
 
-const store = new Map<string, SessionDoc>();
+declare global {
+  // eslint-disable-next-line no-var
+  var __pdfSessionStore: Map<string, SessionDoc> | undefined;
+}
+
+/**
+ * Keep session storage on globalThis so Next.js dev hot-reloads do not wipe
+ * uploaded sessions between /api/upload and /api/chat calls.
+ */
+const store = globalThis.__pdfSessionStore ?? new Map<string, SessionDoc>();
+globalThis.__pdfSessionStore = store;
+
 const { ttlMs: TTL_MS, maxConcurrent: MAX_SESSIONS } = config.session;
 
 function pruneExpired() {
